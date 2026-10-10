@@ -2,6 +2,7 @@ import logging
 import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
+import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
@@ -45,8 +46,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Tez orada adminlarimiz sizning ma'lumotlaringizni tekshirib, ulgurji narxlarni ochib berishadi."
     )
 
-def main():
-    # Veb serverni alohida oqimda (thread) ishga tushiramiz
+async def main():
+    # HTTP serverni alohida oqimda ishga tushiramiz (Render port talabi uchun)
     server_thread = threading.Thread(target=run_http_server, daemon=True)
     server_thread.start()
 
@@ -57,7 +58,14 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("Bot va HTTP server muvaffaqiyatli ishga tushdi...")
-    app.run_polling()
+    
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+
+    # Dastur to'xtab qolmasligi uchun
+    stop_signal = asyncio.Event()
+    await stop_signal.wait()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
