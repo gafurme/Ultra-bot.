@@ -13,9 +13,9 @@ logging.basicConfig(
 )
 
 BOT_TOKEN = "8920659123:AAGGHY7-jOneFvjtHagz7psthRZkWdh14lw"
-ADMIN_ID = 359301058
+ADMIN_ID = 359301058  # Sizning Admin ID raqamingiz
 
-# Render port talabini qondirish uchun oddiy HTTP server (qo'shimcha kutubxona shart emas)
+# Render port talabini qondirish uchun oddiy HTTP server
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -40,18 +40,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
     text = update.message.text
+
+    # Foydalanuvchiga tasdiq xabari
     await update.message.reply_text(
         f"Do'kon nomi qabul qilindi: **{text}**\n\n"
-        "Tez orada adminlarimiz sizning ma'lumotlaringizni tekshirib, ulgurji narxlarni ochib berishadi."
+        "Tez orada adminlarimiz ma'lumotlaringizni tekshirib, ulgurji narxlarni ochib berishadi."
     )
 
+    # 🛑 ENG MUHIMI: Foydalanuvchi yozgan xabarni SIZGA (adminga) yuborish
+    admin_message = (
+        f"🚨 **Yangi mijoz murojaati!**\n\n"
+        f"👤 Ismi: {user.full_name}\n"
+        f"🔗 Username: @{user.username if user.username else 'Yo‘q'}\n"
+        f"🆔 ID: `{user.id}`\n"
+        f"🏢 Do'kon nomi/Matn: {text}"
+    )
+    
+    try:
+        await context.bot.send_message(chat_id=ADMIN_ID, text=admin_message, parse_mode="Markdown")
+    except Exception as e:
+        print(f"Adminga xabar yuborishda xatolik: {e}")
+
 async def main():
-    # HTTP serverni alohida oqimda ishga tushiramiz (Render port talabi uchun)
     server_thread = threading.Thread(target=run_http_server, daemon=True)
     server_thread.start()
 
-    # Telegram botni ishga tushiramiz
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -63,7 +78,6 @@ async def main():
     await app.start()
     await app.updater.start_polling()
 
-    # Dastur to'xtab qolmasligi uchun
     stop_signal = asyncio.Event()
     await stop_signal.wait()
 
