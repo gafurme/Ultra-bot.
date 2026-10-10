@@ -29,7 +29,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Tez orada adminlarimiz sizning ma'lumotlaringizni tekshirib, ulgurji narxlarni ochib berishadi."
     )
 
-# Render port talabini qondirish uchun oddiy veb-server
+# Render port talabini qondirish uchun veb-server
 async def handle_web(request):
     return web.Response(text="Bot is running!")
 
@@ -43,7 +43,7 @@ async def web_server():
     await site.start()
 
 async def main():
-    # Veb serverni fonda ishga tushiramiz (Render port talabi uchun)
+    # Veb serverni fonda ishga tushiramiz
     asyncio.create_task(web_server())
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -57,7 +57,6 @@ async def main():
     await app.start()
     await app.updater.start_polling()
 
-    # Dastur to'xtab qolmasligi uchun
     stop_signal = asyncio.Event()
     await stop_signal.wait()
 
