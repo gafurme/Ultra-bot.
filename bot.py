@@ -1,5 +1,7 @@
 import logging
 import asyncio
+import os
+from aiohttp import web
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
@@ -9,7 +11,6 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# Sizning ma'lumotlaringiz
 BOT_TOKEN = "8920659123:AAGGHY7-jOneFvjtHagz7psthRZkWdh14lw"
 ADMIN_ID = 359301058
 
@@ -28,21 +29,37 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Tez orada adminlarimiz sizning ma'lumotlaringizni tekshirib, ulgurji narxlarni ochib berishadi."
     )
 
-def main():
-    # Event loop xatoligining oldini olish uchun
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+# Render port talabini qondirish uchun oddiy veb-server
+async def handle_web(request):
+    return web.Response(text="Bot is running!")
+
+async def web_server():
+    app_web = web.Application()
+    app_web.add_routes([web.get('/', handle_web)])
+    runner = web.AppRunner(app_web)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
+async def main():
+    # Veb serverni fonda ishga tushiramiz (Render port talabi uchun)
+    asyncio.create_task(web_server())
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("Bot muvaffaqiyatli ishga tushdi...")
-    app.run_polling()
+    print("Bot va veb-server muvaffaqiyatli ishga tushdi...")
+    
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+
+    # Dastur to'xtab qolmasligi uchun
+    stop_signal = asyncio.Event()
+    await stop_signal.wait()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
