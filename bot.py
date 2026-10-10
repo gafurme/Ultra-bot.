@@ -1,7 +1,7 @@
 import logging
-import asyncio
 import os
-from aiohttp import web
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
@@ -13,6 +13,22 @@ logging.basicConfig(
 
 BOT_TOKEN = "8920659123:AAGGHY7-jOneFvjtHagz7psthRZkWdh14lw"
 ADMIN_ID = 359301058
+
+# Render port talabini qondirish uchun oddiy HTTP server (qo'shimcha kutubxona shart emas)
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(b"Bot is running!")
+    
+    def log_message(self, format, *args):
+        pass
+
+def run_http_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), SimpleHTTPRequestHandler)
+    server.serve_forever()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -29,36 +45,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Tez orada adminlarimiz sizning ma'lumotlaringizni tekshirib, ulgurji narxlarni ochib berishadi."
     )
 
-# Render port talabini qondirish uchun veb-server
-async def handle_web(request):
-    return web.Response(text="Bot is running!")
+def main():
+    # Veb serverni alohida oqimda (thread) ishga tushiramiz
+    server_thread = threading.Thread(target=run_http_server, daemon=True)
+    server_thread.start()
 
-async def web_server():
-    app_web = web.Application()
-    app_web.add_routes([web.get('/', handle_web)])
-    runner = web.AppRunner(app_web)
-    await runner.setup()
-    port = int(os.environ.get("PORT", 10000))
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    await site.start()
-
-async def main():
-    # Veb serverni fonda ishga tushiramiz
-    asyncio.create_task(web_server())
-
+    # Telegram botni ishga tushiramiz
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("Bot va veb-server muvaffaqiyatli ishga tushdi...")
-    
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
-
-    stop_signal = asyncio.Event()
-    await stop_signal.wait()
+    print("Bot va HTTP server muvaffaqiyatli ishga tushdi...")
+    app.run_polling()
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
