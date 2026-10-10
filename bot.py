@@ -47,7 +47,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Taxminiy beta katalog (mahsulot nomi, qoldiq miqdori va ulgurji narxi)
     catalog_text = (
         "📦 **ULTRA MOBILE ACCESSORIES — Ulgurji Katalog (Beta)**\n\n"
         "1. 🎧 **Bluetooth Naushniklar (Pro seriya)**\n"
@@ -78,13 +77,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     text = update.message.text
 
-    # Foydalanuvchiga tasdiq xabari
     await update.message.reply_text(
         f"Do'kon nomi qabul qilindi: **{text}**\n\n"
         "Endi `/catalog` buyrug'i orqali mahsulotlar narxlari bilan tanishishingiz mumkin. Tez orada adminlarimiz siz bilan bog'lanishadi."
     )
 
-    # Adminga xabar yuborish
     admin_message = (
         f"🚨 **Yangi mijoz murojaati (Beta)!**\n\n"
         f"👤 Ismi: {user.full_name}\n"
@@ -121,4 +118,4 @@ async def main():
     await stop_signal.wait()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
