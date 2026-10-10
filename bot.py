@@ -10,7 +10,7 @@ logging.basicConfig(
 )
 
 # Sizning ma'lumotlaringiz
-BOT_TOKEN = "8920659123:AAE9S1djLfoh7Hj-3zDgDLBVMGKqBLFsuxa"
+BOT_TOKEN = "8920659123:AAE9S1djLfoh7Hj-3zDgDLBVMGKqBLFsuxA"
 ADMIN_ID = 359301058
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
